@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Guided entry · prototype</title>
+<style>
+  :root{
+    --bg:#E9E3DD; --phone:#FFFFFF; --ink:#1F1A1E; --muted:#6E6670;
+    --faint:#9A9298; --line:rgba(31,26,30,.10); --line-2:rgba(31,26,30,.16);
+    --accent:#8E2F5B; --accent-press:#7a2750; --accent-soft:#F7E8EF; --accent-ink:#5E1E3C;
+    --care:#2E6B5E; --care-soft:#E2F1ED; --chip:#F1ECE9;
+    --radius:16px; --radius-sm:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:24px; gap:28px; flex-wrap:wrap;
+  }
+  .stage{display:flex; flex-direction:column; align-items:center; gap:14px}
+  .caption{font-size:13px; color:var(--muted); max-width:390px; text-align:center; line-height:1.5}
+  .phone{
+    width:390px; height:800px; background:var(--phone); border-radius:42px;
+    box-shadow:0 24px 60px rgba(31,26,30,.22), 0 0 0 10px #15121400;
+    border:9px solid #14110F; position:relative; overflow:hidden; display:flex; flex-direction:column;
+  }
+  .statusbar{height:46px; display:flex; align-items:flex-end; justify-content:space-between;
+    padding:0 26px 6px; font-size:14px; font-weight:600; flex:0 0 auto}
+  .statusbar .dots{display:flex; gap:5px; align-items:center}
+  .statusbar .dot{width:4px;height:4px;border-radius:50%;background:var(--ink);opacity:.85}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:6px 18px 4px; flex:0 0 auto}
+  .iconbtn{width:36px;height:36px;border:none;background:transparent;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);font-size:20px}
+  .iconbtn:hover{background:var(--chip)}
+  .toptitle{font-size:14px;font-weight:600;color:var(--muted)}
+  .progress{display:flex; gap:6px; justify-content:center; padding:6px 0 2px; flex:0 0 auto}
+  .pbar{height:4px;width:34px;border-radius:99px;background:var(--line)}
+  .pbar.on{background:var(--accent)}
+  .pbar.done{background:var(--accent);opacity:.45}
+  .content{flex:1 1 auto; overflow-y:auto; padding:14px 22px 8px}
+  .content::-webkit-scrollbar{width:0}
+  h1.q{font-size:23px; line-height:1.25; margin:6px 0 4px; letter-spacing:-.2px}
+  .sub{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 14px}
+  .summary{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 16px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;
+    background:var(--accent-soft);color:var(--accent-ink);padding:6px 11px;border-radius:99px}
+  .badge.auto{background:var(--chip);color:var(--muted)}
+  .badge .t{font-size:10px;text-transform:uppercase;letter-spacing:.5px;opacity:.7}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .grouplabel{font-size:12px;font-weight:600;color:var(--faint);text-transform:uppercase;
+    letter-spacing:.6px;margin:14px 2px 2px}
+  .opt{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:14px 16px;
+    cursor:pointer;background:#fff;transition:border-color .12s,background .12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt .lbl{font-size:16px;font-weight:500}
+  .opt .osub{font-size:13px;color:var(--muted);margin-top:2px}
+  .opt .mark{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);
+    flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .opt.sq .mark{border-radius:7px}
+  .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .opt.sel .mark{background:var(--accent);border-color:var(--accent)}
+  .scale{margin:6px 0 22px}
+  .scale .slabel{font-size:15px;font-weight:500;margin-bottom:10px}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;height:46px;border:1px solid var(--line-2);background:#fff;border-radius:12px;
+    font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;transition:.12s}
+  .seg button:hover{border-color:var(--accent)}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);margin-top:7px}
+  textarea{width:100%;min-height:150px;border:1px solid var(--line-2);border-radius:var(--radius-sm);
+    padding:14px;font:inherit;font-size:15.5px;line-height:1.55;resize:none;color:var(--ink);background:#fff}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .prompt{background:var(--accent-soft);color:var(--accent-ink);border-radius:var(--radius-sm);
+    padding:14px 16px;font-size:15px;line-height:1.5;margin:0 0 14px;font-weight:500}
+  .prompt.care{background:var(--care-soft);color:#1f4d43}
+  .footer{flex:0 0 auto;padding:12px 22px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:#fff}
+  .btn{width:100%;height:52px;border:none;border-radius:14px;background:var(--accent);color:#fff;
+    font-size:16px;font-weight:600;cursor:pointer;transition:.12s}
+  .btn:hover{background:var(--accent-press)}
+  .btn[disabled]{background:var(--line-2);color:#fff;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--muted);height:44px;font-weight:500}
+  .btn.ghost:hover{background:var(--chip)}
+  .btn.care{background:var(--care)}
+  .homebar{height:26px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .homebar span{width:128px;height:5px;border-radius:99px;background:#14110F;opacity:.85}
+  .resource{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:13.5px;
+    color:var(--care);text-decoration:none;font-weight:500}
+  .resource:hover{text-decoration:underline}
+  /* intro + saved */
+  .center{height:100%;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:0 30px}
+  .orb{width:120px;height:120px;border-radius:50%;margin:0 auto 26px;
+    background:conic-gradient(from 200deg,#8E2F5B,#C46A93,#E8B7CC,#8E2F5B)}
+  .orb.care{background:conic-gradient(from 200deg,#2E6B5E,#74B3A5,#CFE7E0,#2E6B5E)}
+  .center h1{font-size:25px;margin:0 0 12px;letter-spacing:-.3px}
+  .center p{font-size:15px;color:var(--muted);line-height:1.55;margin:0 auto 8px;max-width:300px}
+  .lockline{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--faint);margin-top:18px}
+  /* discard sheet */
+  .overlay{position:absolute;inset:0;background:rgba(20,17,15,.45);display:none;
+    align-items:center;justify-content:center;padding:24px;z-index:5}
+  .overlay.show{display:flex}
+  .sheet{background:#fff;border-radius:20px;padding:24px 22px;width:100%;text-align:center}
+  .sheet h3{margin:0 0 6px;font-size:18px}
+  .sheet p{margin:0 0 18px;font-size:14px;color:var(--muted);line-height:1.5}
+  .sheet .btn{margin-bottom:8px}
+  .sheet .btn.danger{background:#B23A48}
+  .sheet .btn.danger:hover{background:#9c3038}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span> &#9201;</span>
+    </div>
+    <div id="app" style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0"></div>
+    <div class="homebar"><span></span></div>
+    <div class="overlay" id="overlay">
+      <div class="sheet">
+        <h3>Discard this entry?</h3>
+        <p>What you've written so far won't be saved. This can't be undone.</p>
+        <button class="btn danger" onclick="discard()">Discard entry</button>
+        <button class="btn ghost" onclick="closeDiscard()">Keep writing</button>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Interactive prototype — tap through the flow. Copy and screens adapt to what you pick (solo / partner / fantasy / check-in, and how it felt).</div>
+</div>
+
+<script>
+const state={experience:null,factors:[],arousal:null,satisfaction:null,cycleDay:14,emotion:null,gentle:false,text:""};
+let flow=[], idx=0;
+
+const EXPERIENCES=[
+  {id:'solo',label:'A solo moment',sub:'Exploring on my own'},
+  {id:'partner',label:'With a partner',sub:'Shared with someone'},
+  {id:'fantasy',label:'A fantasy or desire',sub:'No event needed'},
+  {id:'checkin',label:'Just checking in',sub:'A general reflection'},
+];
+const FACTORS={
+  partner:['Build-up and foreplay','Taking it slow','Talking openly','A new position or place','Toys or props','Trying something new'],
+  solo:['Taking my time','Using a toy','A fantasy','Setting the mood','A new technique','Watching or reading something'],
+};
+const EMO_GOOD=['Connected','Playful','Confident','Relaxed','Desired','Curious'];
+const EMO_HARD=['Disconnected','Anxious','Numb','Disappointed','Vulnerable'];
+
+function setFlow(){
+  const t=state.experience;
+  if(t==='solo'||t==='partner') flow=['step1','step2','step3','step4'];
+  else if(t==='fantasy') flow=['step1','step3','step4'];
+  else if(t==='checkin') flow=['step1','step4'];
+  else flow=['step1'];
+}
+function expLabel(){const e=EXPERIENCES.find(e=>e.id===state.experience);return e?e.label:''}
+
+function summaryBar(){
+  let b=[];
+  if(state.experience) b.push(`<span class="badge">${expLabel()}</span>`);
+  if(state.arousal) b.push(`<span class="badge">Arousal ${state.arousal}/5</span>`);
+  if(state.satisfaction) b.push(`<span class="badge">Satisfaction ${state.satisfaction}/5</span>`);
+  if((state.experience==='solo'||state.experience==='partner'))
+    b.push(`<span class="badge auto"><span class="t">auto</span> Cycle · day ${state.cycleDay}</span>`);
+  if(state.emotion) b.push(`<span class="badge">${state.emotion}</span>`);
+  return b.length?`<div class="summary">${b.join('')}</div>`:'';
+}
+function progress(){
+  const real=flow.length;
+  let cur=flow.indexOf(currentScreen);
+  let dots='';
+  for(let i=0;i<real;i++) dots+=`<div class="pbar ${i===cur?'on':(i<cur?'done':'')}"></div>`;
+  return `<div class="progress">${dots}</div>`;
+}
+
+let currentScreen='intro';
+function topbar(showProgress=true){
+  return `<div class="topbar">
+      <button class="iconbtn" onclick="back()">&#8592;</button>
+      <span class="toptitle">New entry</span>
+      <button class="iconbtn" onclick="openDiscard()">&#10005;</button>
+    </div>${showProgress&&currentScreen!=='intro'&&currentScreen!=='saved'?progress():''}`;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(currentScreen==='intro') return app.innerHTML=screenIntro();
+  if(currentScreen==='saved') return app.innerHTML=screenSaved();
+  if(currentScreen==='step1') return app.innerHTML=topbar()+screenStep1();
+  if(currentScreen==='step2') return app.innerHTML=topbar()+screenStep2();
+  if(currentScreen==='step3') return app.innerHTML=topbar()+screenStep3();
+  if(currentScreen==='step4') return app.innerHTML=topbar()+screenStep4();
+}
+
+/* ---------- Intro ---------- */
+function screenIntro(){
+  return `<div class="content"><div class="center">
+    <div class="orb"></div>
+    <h1>A guided moment, just for you</h1>
+    <p>A few gentle questions, then space to write. There are no right answers here.</p>
+    <p>Take what's useful, skip what isn't.</p>
+    <div class="lockline">&#128274; Private and locked. Only you can open this.</div>
+  </div></div>
+  <div class="footer"><button class="btn" onclick="start()">Begin</button></div>`;
+}
+function start(){currentScreen='step1';render()}
+
+/* ---------- Step 1: experience ---------- */
+function screenStep1(){
+  const opts=EXPERIENCES.map(e=>`
+    <div class="opt ${state.experience===e.id?'sel':''}" onclick="pickExperience('${e.id}')">
+      <div><div class="lbl">${e.label}</div><div class="osub">${e.sub}</div></div>
+      <div class="mark">&#10003;</div>
+    </div>`).join('');
+  return `<div class="content">
+    <h1 class="q">What are you journaling about?</h1>
+    <p class="sub">Start with what happened — we'll get to how it felt in a moment.</p>
+    <div class="list">${opts}</div>
+  </div>
+  <div class="footer">
+    <button class="btn" id="next1" ${state.experience?'':'disabled'} onclick="next()">Continue</button>
+  </div>`;
+}
+function pickExperience(id){state.experience=id;setFlow();render()}
+
+/* ---------- Step 2: details + scales ---------- */
+function screenStep2(){
+  const list=FACTORS[state.experience]||[];
+  const opts=list.map(f=>`
+    <div class="opt sq ${state.factors.includes(f)?'sel':''}" onclick="toggleFactor('${f.replace(/'/g,"\\'")}')">
+      <div class="lbl">${f}</div><div class="mark">&#10003;</div>
+    </div>`).join('');
+  const ask = state.experience==='partner' ? "What played a part in how it went?" : "What helped it feel good?";
+  return `<div class="content">
+    ${summaryBar()}
+    <h1 class="q">Tell me a little more</h1>
+    <p class="sub">Optional — pick anything that fits. This is what helps you spot patterns later.</p>
+    <div class="grouplabel">${ask}</div>
+    <div class="list">${opts}</div>
+    ${scale('How turned on did you feel?','arousal','Barely','Intensely')}
+    ${scale('How satisfied did you feel?','satisfaction','Not really','Completely')}
+    <div class="summary" style="margin-top:4px">
+      <span class="badge auto"><span class="t">added for you</span> Cycle · day ${state.cycleDay}</span>
+    </div>
+    <p class="sub" style="margin-top:2px">Your cycle day is added automatically, so you can see how desire shifts across the month.</p>
+  </div>
+  <div class="footer"><button class="btn" onclick="next()">Continue</button></div>`;
+}
+function scale(label,key,lo,hi){
+  let btns='';
+  for(let i=1;i<=5;i++) btns+=`<button class="${state[key]===i?'on':''}" onclick="setScale('${key}',${i})">${i}</button>`;
+  return `<div class="scale"><div class="slabel">${label}</div><div class="seg">${btns}</div>
+    <div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`;
+}
+function toggleFactor(f){const i=state.factors.indexOf(f);i>-1?state.factors.splice(i,1):state.factors.push(f);render()}
+function setScale(k,v){state[k]=v;render()}
+
+/* ---------- Step 3: emotion ---------- */
+function screenStep3(){
+  const good=EMO_GOOD.map(e=>emoOpt(e)).join('');
+  const hard=EMO_HARD.map(e=>emoOpt(e)).join('');
+  const optional = state.experience==='fantasy';
+  return `<div class="content">
+    ${summaryBar()}
+    <h1 class="q">How did it leave you feeling?</h1>
+    <p class="sub">${optional?'Optional — only if a feeling stands out.':'Naming it helps you understand it. Pick the one that fits best.'}</p>
+    <div class="grouplabel">These felt good</div>
+    <div class="list">${good}</div>
+    <div class="grouplabel">These were harder</div>
+    <div class="list">${hard}</div>
+  </div>
+  <div class="footer">
+    <button class="btn" id="next3" ${(state.emotion||optional)?'':'disabled'} onclick="next()">Continue</button>
+  </div>`;
+}
+function emoOpt(e){
+  return `<div class="opt ${state.emotion===e?'sel':''}" onclick="pickEmotion('${e}')">
+    <div class="lbl">${e}</div><div class="mark">&#10003;</div></div>`;
+}
+function pickEmotion(e){state.emotion=e;state.gentle=EMO_HARD.includes(e);render()}
+
+/* ---------- Step 4: free text ---------- */
+function buildPrompt(){
+  const t=state.experience, em=(state.emotion||'').toLowerCase(), g=state.gentle;
+  if(t==='partner') return g
+    ? {care:true,text:"It sounds like this one sat heavy. There's no pressure to write much. What were you hoping for — and what would feel kind toward yourself right now?"}
+    : {care:false,text:`You felt ${em} after being with your partner. What did they do that landed most — and what's one small way you'd love to feel this again?`};
+  if(t==='solo') return g
+    ? {care:true,text:"Be gentle with yourself here. What's coming up for you — and what does your body or mind need right now?"}
+    : {care:false,text:`You felt ${em} exploring on your own. What did you learn about what turns you on — and what would you like to try next time?`};
+  if(t==='fantasy') return {care:false,text:"This fantasy is yours alone here. Describe it in as much detail as you like — what about it excites you most?"};
+  return {care:false,text:"No event today, just you checking in. How is your relationship with desire and pleasure feeling lately — and is there anything you'd like more or less of?"};
+}
+function screenStep4(){
+  const p=buildPrompt();
+  return `<div class="content">
+    ${summaryBar()}
+    <h1 class="q">Want to put it into words?</h1>
+    <p class="sub">Optional — even a sentence counts. The more honest, the more it gives back.</p>
+    <div class="prompt ${p.care?'care':''}">${p.text}</div>
+    <textarea id="ta" placeholder="Write as much or as little as you like…" oninput="state.text=this.value">${state.text}</textarea>
+    ${state.gentle?`<a class="resource" href="#" onclick="return false">&#9825; Talking to someone might help — find support resources</a>`:''}
+  </div>
+  <div class="footer">
+    <button class="btn ${state.gentle?'care':''}" onclick="save()">Save to journal</button>
+    <button class="btn ghost" onclick="save()">Save without writing</button>
+  </div>`;
+}
+
+/* ---------- Saved ---------- */
+function screenSaved(){
+  const partner=state.experience==='partner';
+  const g=state.gentle;
+  const reflectPrompt = g
+    ? "Whenever you're ready, come back to this. You don't have to carry it alone."
+    : (partner
+        ? "When the moment's right, this could be a lovely thing to share with your partner."
+        : "Next time you open the app, we'll show you what's working — your patterns are starting to take shape.");
+  return `<div class="content"><div class="center">
+    <div class="orb ${g?'care':''}"></div>
+    <h1>${g?'Saved, gently.':'Entry saved'}</h1>
+    <p>It's tucked away in your private journal. Only you can see it.</p>
+    <p style="color:var(--ink);font-weight:500;margin-top:14px">${reflectPrompt}</p>
+  </div></div>
+  <div class="footer">
+    ${partner&&!g?`<button class="btn" onclick="restart()">Reflect together in Relatio</button>
+      <button class="btn ghost" onclick="restart()">Maybe later</button>`
+     :`<button class="btn ${g?'care':''}" onclick="restart()">Done</button>
+      <button class="btn ghost" onclick="restart()">Set a gentle reminder</button>`}
+  </div>`;
+}
+
+/* ---------- Navigation ---------- */
+function next(){
+  const pos=flow.indexOf(currentScreen);
+  if(pos<flow.length-1){currentScreen=flow[pos+1];}
+  else{currentScreen='saved';}
+  scrollTopSoon();render();
+}
+function back(){
+  if(currentScreen==='step1'){currentScreen='intro';return render();}
+  const pos=flow.indexOf(currentScreen);
+  if(pos>0){currentScreen=flow[pos-1];}else{currentScreen='intro';}
+  render();
+}
+function save(){currentScreen='saved';render();}
+function restart(){
+  Object.assign(state,{experience:null,factors:[],arousal:null,satisfaction:null,emotion:null,gentle:false,text:""});
+  flow=[];currentScreen='intro';render();
+}
+function scrollTopSoon(){setTimeout(()=>{const c=document.querySelector('.content');if(c)c.scrollTop=0;},0);}
+
+/* discard */
+function openDiscard(){document.getElementById('overlay').classList.add('show')}
+function closeDiscard(){document.getElementById('overlay').classList.remove('show')}
+function discard(){closeDiscard();restart();}
+
+render();
+</script>
+</body>
+</html>
