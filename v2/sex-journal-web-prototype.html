@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sex Journal — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafafa; --white:#ffffff;
+    --p600:#0080ff; --p50:#e2f1ff; --p300:#99ccff;
+    --n100:#ececec; --n300:#cccccc; --n600:#5e5e5e; --n700:#4b4b4b; --n800:#2e2e2e; --n900:#0d0d0d;
+    --r16:16px; --pill:999px;
+    --sh-card:0px 0px 16px 0px rgba(13,13,13,0.04);
+    --sh-btn:0px 0px 24px 0px rgba(13,13,13,0.08);
+    --pink-bg:#fbeaf0; --pink-tx:#b03a6a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  body{font-family:"Poppins",-apple-system,sans-serif;background:#e9e6e2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;gap:26px;flex-wrap:wrap}
+  .device{width:375px;height:812px;background:var(--bg);border-radius:44px;border:10px solid #14110f;overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(20,17,15,.22);display:flex;flex-direction:column}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+  /* status bar */
+  .statusbar{height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px;flex:0 0 auto}
+  .statusbar .t{font-size:15px;font-weight:500;color:#000}
+  .statusbar .ic{display:flex;gap:6px;align-items:center;font-size:13px}
+  /* top bar */
+  .topbar{display:flex;flex-direction:column;flex:0 0 auto}
+  .tbrow{display:flex;align-items:center;justify-content:space-between;padding:0 8px}
+  .cbtn{width:40px;height:40px;border-radius:var(--pill);background:#fff;box-shadow:var(--sh-btn);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#000;margin:8px}
+  .tbcenter{flex:1;text-align:center}
+  .tbcenter .tt{font-size:14px;font-weight:500;color:var(--n800);line-height:21px}
+  .tbcenter .ts{font-size:12px;font-weight:400;color:var(--n700);line-height:18px}
+  .progress{display:flex;gap:8px;align-items:center;padding:4px 16px 8px}
+  .pseg{flex:1;height:8px;border-radius:100px;background:var(--n100)}
+  .pseg.on{background:linear-gradient(111deg,#0080ff 14%,#2239b8 86%)}
+  /* content */
+  .content{flex:1;overflow-y:auto;padding:8px 16px 0}
+  .content::-webkit-scrollbar{width:0}
+  h1{font-size:24px;font-weight:500;line-height:32px;color:var(--n800)}
+  .sub{font-size:14px;font-weight:400;line-height:21px;color:var(--n600);margin-top:8px}
+  .stack{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+  /* select */
+  .opt{min-height:64px;background:#fff;border:1px solid transparent;border-radius:var(--r16);box-shadow:var(--sh-card);display:flex;align-items:center;gap:16px;padding:16px;cursor:pointer;transition:background .12s,border-color .12s}
+  .opt .emo{font-size:22px;width:24px;text-align:center;flex:0 0 auto;line-height:1}
+  .opt .lbl{flex:1;font-size:16px;font-weight:400;color:var(--n900);line-height:24px}
+  .opt .ctrl{width:24px;height:24px;flex:0 0 auto;border-radius:50%;border:1.6px solid var(--n300);position:relative}
+  .opt.sq .ctrl{border-radius:7px}
+  .opt.sel{background:var(--p50);border-color:var(--p300)}
+  .opt.sel .ctrl{border-color:var(--p600)}
+  .opt.sel .ctrl::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--p600)}
+  .opt.sq.sel .ctrl::after{content:"✓";inset:0;border-radius:0;background:none;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .opt.sq.sel .ctrl{background:var(--p600);border-color:var(--p600)}
+  /* scales */
+  .scale-q{font-size:24px;font-weight:500;line-height:32px;color:var(--n800);margin-top:24px}
+  .scale-row{display:flex;justify-content:space-between;margin-top:16px}
+  .circ{width:56px;height:56px;border-radius:50%;background:#fff;box-shadow:var(--sh-card);border:1px solid transparent;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--n900);cursor:pointer;transition:.12s}
+  .circ.sel{background:var(--p50);border-color:var(--p300)}
+  .ends{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--n600)}
+  /* feedback */
+  .fb{background:var(--p50);border-radius:var(--r16);padding:16px;margin-top:16px;display:none}
+  .fb.show{display:block}
+  .fb .h{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:500;color:var(--n900);margin-bottom:6px}
+  .fb .b{font-size:14px;line-height:21px;color:var(--n900)}
+  /* details header (write) */
+  .det{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .det .clk{font-size:13px;color:var(--n700);display:flex;align-items:center;gap:5px}
+  .badge{font-size:12px;font-weight:400;padding:3px 10px;border-radius:var(--pill);background:var(--pink-bg);color:var(--pink-tx)}
+  .badge.done{background:#e3f3ea;color:#2f7d52}
+  textarea{width:100%;min-height:128px;margin-top:16px;border:1px solid var(--n100);border-radius:var(--r16);padding:16px;font:inherit;font-size:15px;line-height:22px;color:var(--n900);resize:none;background:#fff;box-shadow:var(--sh-card)}
+  textarea:focus{outline:none;border-color:var(--p300)}
+  .prompt{background:var(--p50);border-radius:var(--r16);padding:16px;font-size:15px;line-height:22px;color:var(--n800);margin-top:16px}
+  /* footer */
+  .footer{flex:0 0 auto;padding:12px 16px 10px}
+  .btn{width:100%;height:52px;border:none;border-radius:var(--r16);background:var(--p600);color:#fff;font-family:inherit;font-size:16px;font-weight:500;cursor:pointer;box-shadow:var(--sh-btn)}
+  .btn:disabled{background:var(--n300);box-shadow:none;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--n600);box-shadow:none;height:44px}
+  .home{height:24px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .home span{width:134px;height:5px;border-radius:99px;background:#000}
+  /* intro / saved */
+  .center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px;text-align:center}
+  .orb{width:104px;height:104px;border-radius:50%;margin:0 auto 24px;background:conic-gradient(from 200deg,#0080ff,#8ab8ff,#e2f1ff,#0080ff)}
+  .hero{width:100%;height:240px;border-radius:24px;margin-bottom:24px;display:block}
+  .introtext{text-align:left;padding-top:8px}
+  .introtext .sub{margin-top:8px}
+  .vline{font-size:14px;line-height:21px;color:var(--n800);margin-top:10px}
+  .introimg{width:calc(100% + 32px);margin:18px -16px 0;display:block}
+  .orb.care{background:conic-gradient(from 200deg,#2e6b5e,#9fd9cb,#e2f1ef,#2e6b5e)}
+  .center h1{font-size:25px}
+  .center p{font-size:15px;line-height:22px;color:var(--n600);margin-top:10px}
+  .vlist{margin-top:22px;display:flex;flex-direction:column;gap:14px;text-align:left}
+  .vrow{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:20px;color:var(--n800)}
+  .vrow .ve{font-size:20px}
+  .lock{margin-top:22px;font-size:12px;color:var(--n600)}
+  .caption{width:100%;max-width:760px;text-align:center;font-size:13px;color:#6e6b66;flex-basis:100%}
+</style>
+</head>
+<body>
+<div class="device"><div id="app"></div></div>
+<div class="caption">Interactive prototype · matches the Figma design. Pick an option on “What are you journaling about?” to branch the flow; the arousal/satisfaction scales route to the matching feelings screen.</div>
+
+<script>
+const A_FB=[null,
+ {e:"🤍",t:"That's completely okay",b:"Desire ebbs and flows — a quiet day says nothing about you. Just noticing it is already a kind thing to do for yourself."},
+ {e:"🌙",t:"A soft simmer",b:"There's a little spark there. Worth getting curious about what might turn the heat up next time."},
+ {e:"✨",t:"Somewhere in between",b:"You felt something — and that counts. What do you think could have taken it higher?"},
+ {e:"🔥",t:"Really nice",b:"Your body was responding and it felt good. Hold onto whatever got you here."},
+ {e:"🚀",t:"Fully lit up",b:"Completely turned on — savour it. Remember what sparked this; it's gold for next time."}];
+const S_FB=[null,
+ {e:"🤍",t:"Be gentle with yourself",b:"Not what you'd hoped for — and that's worth honouring, not hiding. Naming it is how things begin to shift."},
+ {e:"🌱",t:"Left wanting more",b:"Something was missing for you. What would have made it feel fuller?"},
+ {e:"✨",t:"Good, not amazing",b:"There was something to enjoy here. What would've nudged it up to a 5?"},
+ {e:"💛",t:"Really satisfying",b:"That landed well — and it's worth repeating. Notice what made it work."},
+ {e:"💖",t:"Completely fulfilled",b:"Fully satisfied — soak it in. Remembering what made it so good is a gift to future you."}];
+const BULLSEYE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>';
+
+const FACTORS={
+  solo:{q:"What helped it feel good?",items:[["⏳","Taking my time"],["🎆","Using a toy"],["🌖","Setting the mood"],["⛅","A fantasy"],["💡","A new technique"]]},
+  partner:{q:"What played a part?",items:[["🔥","Build-up and foreplay"],["⏳","Taking it slow"],["💞","Talking openly"],["📍","A new position or place"],["🎆","Trying something new"]]}
+};
+const EMO_POS=[["💞","Connected"],["💖","Desired"],["🔥","Confident"],["🌸","Relaxed"],["⛅","Disconnected"],["🥀","Disappointed"],["🌩️","Anxious"],["🤍","Vulnerable"],["🌱","Other"]];
+const EMO_CARE=[["⛅","Disconnected"],["🌩️","Anxious"],["🌖","Numb"],["🥀","Disappointed"],["🤍","Vulnerable"],["🌱","Other"]];
+const EXP=[["🛌","A solo moment","Exploring on my own"],["🫂","With a partner","Shared with someone"],["☁️","A fantasy or desire","No event needed"],["👋","Just checking in","A general reflection"]];
+
+let state={};
+function reset(){ state={exp:null,factors:new Set(),arousal:null,satis:null,emotion:null,emotions:new Set(),care:false,text:""}; }
+reset();
+let stack=[];
+
+function flowOf(){ const e=state.exp;
+  if(e==='solo'||e==='partner') return ['exp','details','emotion','write'];
+  if(e==='fantasy') return ['exp','emotion','write'];
+  return ['exp','write']; }
+function stepNo(scr){ const f=flowOf(); const i=f.indexOf(scr); return i<0?0:i+1; }
+
+function go(scr,push=true){ if(push && current) stack.push(current); current=scr; render(); }
+function back(){ if(stack.length){ current=stack.pop(); render(); } else { current='intro'; render(); } }
+let current='intro';
+
+// shared chrome
+function statusbar(){return `<div class="statusbar"><span class="t">9:41</span><span class="ic">📶 📡 🔋</span></div>`;}
+function topbar(title,sub,step){
+  let segs='';
+  for(let i=1;i<=4;i++) segs+=`<div class="pseg ${i<=step?'on':''}"></div>`;
+  return `${statusbar()}<div class="topbar"><div class="tbrow">
+    <button class="cbtn" onclick="back()">←</button>
+    <div class="tbcenter"><div class="tt">${title}</div><div class="ts">${sub}</div></div>
+    <button class="cbtn" onclick="reset();current='intro';render()">✕</button>
+  </div><div class="progress">${segs}</div></div>`;
+}
+function home(){return `<div class="home"><span></span></div>`;}
+
+// screens
+function scrIntro(){
+  return `<div class="screen">${statusbar()}
+   <div class="content">
+     <div class="introtext">
+       <h1>Get to know your pleasure</h1>
+       <p class="sub">A private journal for your sex life — notice what you feel, what you want, and what works.</p>
+       <p class="vline">💖 Understand yourself — your desires and boundaries.</p>
+       <p class="vline">✨ See your patterns — how desire shifts with your cycle.</p>
+       <p class="vline">🔒 Yours alone — your private space, so you can be fully honest.</p>
+     </div>
+     <img class="introimg" src="intro.png" alt="" />
+   </div>
+   <div class="footer"><button class="btn" onclick="go('exp')">Start journaling</button></div>${home()}</div>`;
+}
+function scrExp(){
+  const opts=EXP.map(([e,l,s],i)=>`<div class="opt ${state.exp===['solo','partner','fantasy','checkin'][i]?'sel':''}" onclick="pickExp('${['solo','partner','fantasy','checkin'][i]}')">
+     <span class="emo">${e}</span><span class="lbl">${l}</span><span class="ctrl"></span></div>`).join('');
+  return `<div class="screen">${topbar('Sex Journal','Unit 2 of 2',1)}
+   <div class="content"><h1>What are you journaling about?</h1>
+    <p class="sub">Start with what happened — we'll get to how it felt in a moment.</p>
+    <div class="stack">${opts}</div></div>
+   <div class="footer"><button class="btn" ${state.exp?'':'disabled'} onclick="afterExp()">Continue</button></div>${home()}</div>`;
+}
+function pickExp(v){ state.exp=v; render(); }
+function afterExp(){ const f=flowOf(); go(f[1]); }
+
+function scrDetails(){
+  const F=FACTORS[state.exp]||FACTORS.solo;
+  const items=F.items.map(([e,l])=>`<div class="opt sq ${state.factors.has(l)?'sel':''}" onclick="togF('${l.replace(/'/g,"\\'")}')">
+     <span class="emo">${e}</span><span class="lbl">${l}</span><span class="ctrl"></span></div>`).join('');
+  const circ=(key)=>{let c='';for(let i=1;i<=5;i++)c+=`<div class="circ ${state[key]===i?'sel':''}" onclick="setScale('${key}',${i})">${i}</div>`;return c;};
+  const af=state.arousal?A_FB[state.arousal]:null;
+  const sf=state.satis?S_FB[state.satis]:null;
+  return `<div class="screen">${topbar('Sex Journal','Unit 2 of 2',2)}
+   <div class="content"><h1>A little more detail</h1>
+    <p class="sub">${F.q}</p>
+    <div class="stack">${items}</div>
+    <div class="scale-q">How turned on did you feel?</div>
+    <div class="scale-row">${circ('arousal')}</div>
+    <div class="ends"><span>Barely</span><span>Intensely</span></div>
+    <div class="fb ${af?'show':''}">${af?`<div class="h">${af.e} ${af.t}</div><div class="b">${af.b}</div>`:''}</div>
+    <div class="scale-q">How satisfied did you feel?</div>
+    <div class="scale-row">${circ('satis')}</div>
+    <div class="ends"><span>Not really</span><span>Completely</span></div>
+    <div class="fb ${sf?'show':''}">${sf?`<div class="h">${sf.e} ${sf.t}</div><div class="b">${sf.b}</div>`:''}</div>
+    <div style="height:8px"></div>
+   </div>
+   <div class="footer"><button class="btn" onclick="afterDetails()">Continue</button></div>${home()}</div>`;
+}
+function togF(l){ state.factors.has(l)?state.factors.delete(l):state.factors.add(l); render(); }
+function setScale(k,v){ state[k]=v; render(); }
+function afterDetails(){ state.care=false; go('emotion'); }
+
+function scrEmotion(){
+  const opts=EMO_POS.map(([e,l],i)=>{
+    const on=state.emotions.has(l);
+    const gap=(i===4||i===8)?'margin-top:8px;':'';
+    return `<div class="opt sq ${on?'sel':''}" style="${gap}" onclick="togEmo('${l}')">
+     <span class="emo">${e}</span><span class="lbl">${l}</span><span class="ctrl"></span></div>`;
+  }).join('');
+  const ready = state.emotions.size>0 || state.exp==='fantasy';
+  return `<div class="screen">${topbar('Sex Journal','Unit 2 of 2',3)}
+   <div class="content"><h1>How did it leave you feeling?</h1>
+    <p class="sub">Naming it helps you understand it. Pick all that fit.</p>
+    <div class="stack">${opts}</div><div style="height:8px"></div></div>
+   <div class="footer"><button class="btn" ${ready?'':'disabled'} onclick="go('write')">Continue</button></div>${home()}</div>`;
+}
+function pickEmo(l){ state.emotion=l; if(['Disconnected','Anxious','Numb','Disappointed','Vulnerable'].includes(l)) state.care=true; render(); }
+function togEmo(l){ state.emotions.has(l)?state.emotions.delete(l):state.emotions.add(l); render(); }
+
+function writePrompt(){
+  const em=(state.emotion||'').toLowerCase();
+  if(state.care) return "However it landed, there's no pressure to write much. What do you need right now — and what would feel kind toward yourself today?";
+  if(state.exp==='partner') return `You felt ${em||'something'} after being with your partner. What did they do that landed most — and what's one small way you'd love to feel this again?`;
+  if(state.exp==='solo') return `You felt ${em||'something'} exploring on your own. What did you learn about what turns you on — and what would you like to try next time?`;
+  if(state.exp==='fantasy') return "This fantasy is yours alone here. Describe it in as much detail as you like — what about it excites you most?";
+  return "No event today, just checking in. How is your relationship with desire and pleasure feeling lately — and is there anything you'd like more or less of?";
+}
+function scrWrite(){
+  return `<div class="screen">${topbar('Sex Journal','Unit 2 of 2',4)}
+   <div class="content"><h1>However it felt, this is just for you</h1>
+    <p class="sub">What stood out — and is there anything you'd want more or less of?</p>
+    <textarea placeholder="Write as much or as little as you like…" oninput="state.text=this.value">${state.text||''}</textarea>
+   </div>
+   <div class="footer"><button class="btn" onclick="go('saved')">Save to journal</button></div>${home()}</div>`;
+}
+function scrSaved(){
+  const partner=state.exp==='partner'&&!state.care;
+  const line = state.care ? "Whenever you're ready, come back to this. You don't have to carry it alone."
+    : partner ? "When the moment's right, this could be a lovely thing to share with your partner."
+    : "Next time you open the app, we'll show you what's working — your patterns are taking shape.";
+  return `<div class="screen">${statusbar()}
+   <div class="content"><div class="center">
+    <div class="orb ${state.care?'care':''}"></div>
+    <h1>${state.care?'Saved, gently.':'Entry saved'}</h1>
+    <p>It's tucked away in your private journal. Only you can see it.</p>
+    <p style="color:var(--n800);font-weight:500">${line}</p>
+   </div></div>
+   <div class="footer"><button class="btn" onclick="reset();stack=[];go('intro',false)">Done</button></div>${home()}</div>`;
+}
+
+function render(){
+  const m={intro:scrIntro,exp:scrExp,details:scrDetails,emotion:scrEmotion,write:scrWrite,saved:scrSaved};
+  document.getElementById('app').innerHTML=(m[current]||scrIntro)();
+  const c=document.querySelector('.content'); if(c) c.scrollTop=0;
+}
+render();
+</script>
+</body>
+</html>
